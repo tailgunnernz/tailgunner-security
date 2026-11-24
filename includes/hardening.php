@@ -109,8 +109,13 @@ function tg_security_block_author_scan() {
 	remove_action( 'template_redirect', 'redirect_canonical' );
 }
 
+/**
+ * Answers /wp/v2/users with a 401 for logged-out visitors, even when another
+ * filter has already put a response together (a REST cache, say). An error
+ * that is already there is left alone.
+ */
 function tg_security_block_rest_users( $result, $server, $request ) {
-	if ( null !== $result || is_user_logged_in() || ! tg_security_enabled( 'user_enumeration' ) ) {
+	if ( is_wp_error( $result ) || is_user_logged_in() || ! tg_security_enabled( 'user_enumeration' ) ) {
 		return $result;
 	}
 

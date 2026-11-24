@@ -17,7 +17,7 @@ if ( defined( 'TG_SECURITY_VERSION' ) ) {
 	return;
 }
 
-define( 'TG_SECURITY_VERSION', '1.0.1' );
+define( 'TG_SECURITY_VERSION', '1.0.2' );
 define( 'TG_SECURITY_DIR', __DIR__ . '/' );
 
 require TG_SECURITY_DIR . 'includes/common.php';
@@ -37,6 +37,7 @@ foreach ( tg_security_option_guard_names() as $tg_security_option ) {
 }
 unset( $tg_security_option );
 add_filter( 'validate_current_theme', 'tg_security_validate_theme_guard', PHP_INT_MAX );
+add_action( 'plugins_loaded', 'tg_security_maybe_reactivate', PHP_INT_MAX );
 
 // acf/init fires inside ACF's own init, after WPML has set the language its
 // cache keys use and before ACF registers post types and taxonomies.
@@ -68,7 +69,9 @@ add_filter( 'two_factor_primary_provider_for_user', 'tg_security_two_factor_prim
 // Hardening.
 add_action( 'plugins_loaded', 'tg_security_hardening_early', PHP_INT_MAX );
 add_action( 'template_redirect', 'tg_security_block_author_scan', 0 );
-add_filter( 'rest_pre_dispatch', 'tg_security_block_rest_users', 10, 3 );
+// Late, so a plugin that rebuilds the response at the default priority
+// (ACF Pro does) can't undo it.
+add_filter( 'rest_pre_dispatch', 'tg_security_block_rest_users', PHP_INT_MAX, 3 );
 add_filter( 'wp_sitemaps_add_provider', 'tg_security_no_user_sitemap', 10, 2 );
 add_filter( 'option_default_role', 'tg_security_safe_default_role' );
 add_filter( 'the_generator', 'tg_security_hide_generator' );

@@ -131,18 +131,55 @@ function tg_security_health_verify( $body, $signature, $now_ms = null ) {
 	return true;
 }
 
+/**
+ * A host in its ASCII (punycode) form, so an IDN matches whether the monitor
+ * or the site settings spell it in Unicode or as xn--.
+ */
+function tg_security_host_ascii( $host ) {
+	if ( ! preg_match( '/[^\x20-\x7e]/', $host ) ) {
+		return $host;
+	}
+
+	if ( function_exists( 'idn_to_ascii' ) ) {
+		$ascii = defined( 'INTL_IDNA_VARIANT_UTS46' ) ? idn_to_ascii( $host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46 ) : idn_to_ascii( $host );
+
+		if ( is_string( $ascii ) && '' !== $ascii ) {
+			return $ascii;
+		}
+	}
+
+	$host = function_exists( 'mb_strtolower' ) ? mb_strtolower( $host, 'UTF-8' ) : $host;
+
+	try {
+		if ( class_exists( 'WpOrg\\Requests\\IdnaEncoder' ) ) {
+			return WpOrg\Requests\IdnaEncoder::encode( $host );
+		}
+
+		if ( class_exists( 'Requests_IDNAEncoder' ) ) {
+			return Requests_IDNAEncoder::encode( $host );
+		}
+	} catch ( Exception $e ) {
+		return $host;
+	}
+
+	return $host;
+}
+
 function tg_security_health_host_matches( $host ) {
 	$normalise = function ( $value ) {
-		$value = strtolower( trim( (string) $value ) );
-		$value = preg_replace( '/:\d+$/', '', $value );
+		$value = rtrim( preg_replace( '/:\d+$/', '', trim( (string) $value ) ), '.' );
+		$value = tg_security_host_ascii( $value );
 
-		return preg_replace( '/^www\./', '', $value );
+		return preg_replace( '/^www\./', '', strtolower( $value ) );
 	};
 
 	$host = $normalise( $host );
 
 	foreach ( array( home_url(), site_url() ) as $url ) {
-		if ( '' !== $host && $normalise( wp_parse_url( $url, PHP_URL_HOST ) ) === $host ) {
+		// Not wp_parse_url(): PHP's parse_url() mangles non-ASCII hosts.
+		$url_host = preg_match( '#^[a-z][a-z0-9+.-]*://(?:[^@/?\#]*@)?([^/?\#]+)#i', (string) $url, $m ) ? $m[1] : '';
+
+		if ( '' !== $host && $normalise( $url_host ) === $host ) {
 			return true;
 		}
 	}
@@ -351,7 +388,7 @@ function tg_security_health_report() {
 		$warnings[] = 'mail_failed_24h';
 	}
 
-	foreach ( array( 'option_heal', 'acf_heal' ) as $type ) {
+	foreach ( array( 'option_heal', 'acf_heal', 'reactivated' ) as $type ) {
 		if ( tg_security_recent( $type ) ) {
 			$warnings[] = $type . '_24h';
 		}
@@ -416,6 +453,7 @@ function tg_security_health_report() {
 			'option_heal'  => $log( 'option_heal' ),
 			'acf_heal'     => $log( 'acf_heal' ),
 			'loader_failed' => $log( 'loader_failed', 1 ),
+			'reactivated'   => $log( 'reactivated', 1 ),
 		),
 	);
 }

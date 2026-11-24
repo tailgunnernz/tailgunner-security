@@ -30,6 +30,44 @@ function tg_security_basename() {
 	return basename( TG_SECURITY_DIR ) . '/tailgunner-security.php';
 }
 
+/**
+ * Puts the plugin back in active_plugins when the mu-plugin loader is running
+ * it but WordPress has it switched off and nobody deactivated it.
+ *
+ * Deactivating through WordPress removes the loader and leaves a tombstone, so
+ * this only fires when the plugin dropped out of the list some other way: an
+ * object cache serving a stale active_plugins while another plugin saved the
+ * list, for example. At most once an hour. Deleting the plugin folder still
+ * switches everything off, because the loader then has nothing to include.
+ */
+function tg_security_maybe_reactivate() {
+	if ( ! defined( 'TG_SECURITY_LOADER' ) || defined( 'TG_SECURITY_FILE' ) || is_multisite() || wp_installing() || wp_is_maintenance_mode() ) {
+		return;
+	}
+
+	$basename = tg_security_basename();
+
+	if ( file_exists( WPMU_PLUGIN_DIR . '/0-tailgunner-security.php.off' ) || ! is_readable( WP_PLUGIN_DIR . '/' . $basename ) || get_transient( 'tg_security_reactivated' ) ) {
+		return;
+	}
+
+	$active = get_option( 'active_plugins' );
+
+	// An empty or broken list is the option guard's job. A plugin that is in
+	// the list but didn't load is paused by recovery mode: leave it.
+	if ( ! is_array( $active ) || ! $active || in_array( $basename, $active, true ) ) {
+		return;
+	}
+
+	set_transient( 'tg_security_reactivated', 1, HOUR_IN_SECONDS );
+
+	$active[] = $basename;
+	sort( $active );
+	update_option( 'active_plugins', $active );
+
+	tg_security_record( 'reactivated' );
+}
+
 function tg_security_is_web_request() {
 	return 'cli' !== PHP_SAPI && ! ( defined( 'WP_CLI' ) && WP_CLI );
 }

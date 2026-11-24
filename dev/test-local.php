@@ -102,5 +102,15 @@ $body6 = json_encode( array( 'host' => 'example.co.nz', 'ts' => $now + 5000 ) );
 t( 'signature from another key refused', 'signature' === tg_security_health_verify( $body6, base64_encode( sodium_crypto_sign_detached( $body6, sodium_crypto_sign_secretkey( $other ) ) ), $now + 5000 ) );
 t( 'valid newer request accepted', true === tg_security_health_verify( $body6, $sign( $body6 ), $now + 5000 ) );
 
+// Host matching for internationalised domains, whichever form each side uses.
+$GLOBALS['tg_test_home'] = 'https://www.tēst.nz';
+t( 'IDN: Unicode host matches Unicode home', tg_security_health_host_matches( 'tēst.nz' ) );
+t( 'IDN: punycode host matches Unicode home', tg_security_health_host_matches( 'xn--tst-3qa.nz' ) );
+t( 'IDN: upper case, port and trailing dot ignored', tg_security_health_host_matches( 'WWW.XN--TST-3QA.NZ.:443' ) );
+t( 'IDN: plain ASCII lookalike refused', ! tg_security_health_host_matches( 'test.nz' ) );
+$GLOBALS['tg_test_home'] = 'https://xn--tst-3qa.nz';
+t( 'IDN: Unicode host matches punycode home', tg_security_health_host_matches( 'tēst.nz' ) );
+$GLOBALS['tg_test_home'] = 'https://www.example.co.nz';
+
 echo $fails ? "\n$fails FAILED\n" : "\nall passed\n";
 exit( $fails ? 1 : 0 );
