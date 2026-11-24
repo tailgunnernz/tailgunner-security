@@ -156,20 +156,12 @@ tgt( 'xmlrpc blocked', tg_security_xmlrpc_blocked() );
 tgt( 'theme validation guard passes a healthy site', true === tg_security_validate_theme_guard( true ) );
 tgt( 'file editor off', defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT );
 
-// Two-factor. Runs the check both inside and after the grace period, then
-// puts the start date back.
+// Two-factor.
 if ( class_exists( 'Two_Factor_Core' ) && $admin ) {
 	$id         = $admin[0]->ID;
-	$start      = get_option( 'tg_security_two_factor_start' );
 	$own        = tg_security_two_factor_own( get_user_meta( $id, '_two_factor_enabled_providers', true ), $id );
 	$subscriber = get_users( array( 'role' => 'subscriber', 'number' => 1 ) );
 
-	update_option( 'tg_security_two_factor_start', time(), false );
-	$prov = Two_Factor_Core::get_enabled_providers_for_user( $admin[0] );
-	tgt( 'grace: email not forced yet', $own || ! in_array( 'Two_Factor_Email', $prov, true ), implode( ',', $prov ) );
-	tgt( 'grace: status says when', $own || false !== strpos( tg_security_two_factor_status( $id ), 'email from' ), tg_security_two_factor_status( $id ) );
-
-	update_option( 'tg_security_two_factor_start', time() - 15 * DAY_IN_SECONDS, false );
 	$prov = Two_Factor_Core::get_enabled_providers_for_user( $admin[0] );
 	tgt( 'forced: admin has a second factor', (bool) array_diff( $prov, array( 'Two_Factor_Backup_Codes' ) ), implode( ',', $prov ) );
 	if ( ! $own ) {
@@ -181,8 +173,6 @@ if ( class_exists( 'Two_Factor_Core' ) && $admin ) {
 	if ( $subscriber ) {
 		tgt( 'forced: subscriber not forced', ! in_array( 'Two_Factor_Email', Two_Factor_Core::get_enabled_providers_for_user( $subscriber[0] ), true ) || in_array( 'Two_Factor_Email', (array) get_user_meta( $subscriber[0]->ID, '_two_factor_enabled_providers', true ), true ) );
 	}
-
-	false === $start ? delete_option( 'tg_security_two_factor_start' ) : update_option( 'tg_security_two_factor_start', $start, false );
 } else {
 	echo "SKIP two-factor (Two Factor plugin not active)\n";
 }

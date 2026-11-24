@@ -309,7 +309,7 @@ function tg_security_health_report() {
 
 	// Two-factor.
 	$two_factor_plugin = class_exists( 'Two_Factor_Core' );
-	$two_factor_forced = $two_factor_plugin && tg_security_enabled( 'two_factor' ) ? gmdate( 'Y-m-d', tg_security_two_factor_grace_until() ) : null;
+	$two_factor_forced = $two_factor_plugin && tg_security_enabled( 'two_factor' );
 
 	if ( ! $two_factor_plugin && tg_security_enabled( 'two_factor' ) ) {
 		$warnings[] = 'two_factor_plugin_missing';

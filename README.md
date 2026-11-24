@@ -10,7 +10,7 @@ The baseline plugin for every WordPress site Tailgunner looks after, on any host
 - **Core updates.** Maintenance and security releases install automatically, major releases never do, whatever wp-config or an mu-plugin says. `DISALLOW_FILE_MODS` is respected.
 
 **Security**
-- **Forced two-factor** for anyone who can manage the site, edit others' content or run the shop. Users without an authenticator app or passkey get emailed codes, starting 14 days after the plugin first sees Two Factor active on the site; until then they see a notice asking them to set one up. Needs the [Two Factor](https://wordpress.org/plugins/two-factor/) plugin.
+- **Forced two-factor** for anyone who can manage the site, edit others' content or run the shop. Users without an authenticator app or passkey get emailed codes. Needs the [Two Factor](https://wordpress.org/plugins/two-factor/) plugin.
 - **Hardening.** XML-RPC off (unless Jetpack is connected), file editor off, no username listing for logged-out visitors (`?author=N`, `/wp-json/wp/v2/users`, users sitemap), no privileged default role for registrations, no WordPress version in the generator tag.
 - **Security headers.** HSTS (1 day, no includeSubDomains or preload), `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options: SAMEORIGIN` on front-end pages. No Content-Security-Policy.
 - **Scanner block.** The rules from our `.htaccess` scanner block, in PHP, so sites on nginx, Lightning or other hosts get them too.

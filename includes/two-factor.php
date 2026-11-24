@@ -7,10 +7,6 @@
  * by email. When someone has an authenticator app (or a passkey) and left
  * their primary method on "Default", that is used before email.
  *
- * Email is only forced 14 days after the plugin first sees Two Factor active
- * on a site. Until then, people without a second factor see a notice asking
- * them to set one up, which they can do without needing an emailed code.
- *
  * Without the Two Factor plugin this does nothing; the health check reports
  * the plugin as missing. To switch forcing off on one site, return false for
  * 'two_factor' from the tg_security_feature_enabled filter in an mu-plugin.
@@ -22,20 +18,6 @@ function tg_security_two_factor_required( $user_id ) {
 	return user_can( $user_id, 'manage_options' )
 		|| user_can( $user_id, 'edit_others_posts' )
 		|| user_can( $user_id, 'manage_woocommerce' );
-}
-
-/**
- * When forced email codes start on this site.
- */
-function tg_security_two_factor_grace_until() {
-	$start = (int) get_option( 'tg_security_two_factor_start' );
-
-	if ( ! $start ) {
-		$start = time();
-		add_option( 'tg_security_two_factor_start', $start, '', false );
-	}
-
-	return $start + 14 * DAY_IN_SECONDS;
 }
 
 /**
@@ -86,7 +68,7 @@ function tg_security_force_two_factor( $providers, $user_id ) {
 
 	$providers = is_array( $providers ) ? $providers : array();
 
-	if ( ! tg_security_two_factor_required( $user_id ) || time() < tg_security_two_factor_grace_until() ) {
+	if ( ! tg_security_two_factor_required( $user_id ) ) {
 		return $providers;
 	}
 
@@ -132,36 +114,6 @@ function tg_security_two_factor_primary( $provider, $user_id ) {
 }
 
 /**
- * During the grace period: ask people who will be forced to set up a second
- * factor while they still can without an emailed code.
- */
-function tg_security_two_factor_notice() {
-	$user_id = get_current_user_id();
-
-	if ( ! $user_id || ! class_exists( 'Two_Factor_Core' ) || ! tg_security_enabled( 'two_factor' ) || ! tg_security_two_factor_required( $user_id ) ) {
-		return;
-	}
-
-	$until = tg_security_two_factor_grace_until();
-
-	if ( time() >= $until || tg_security_two_factor_own( get_user_meta( $user_id, tg_security_two_factor_meta_key(), true ), $user_id ) ) {
-		return;
-	}
-
-	printf(
-		'<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
-		esc_html(
-			sprintf(
-				'Please set up two-factor authentication for your account. From %s, logging in will also need a code sent to your email address, unless you use an authenticator app.',
-				date_i18n( get_option( 'date_format' ), $until )
-			)
-		),
-		esc_url( get_edit_profile_url( $user_id ) . '#two-factor-options' ),
-		esc_html( 'Set it up now' )
-	);
-}
-
-/**
  * For the health check: what login will ask this user for.
  */
 function tg_security_two_factor_status( $user_id ) {
@@ -179,7 +131,5 @@ function tg_security_two_factor_status( $user_id ) {
 		return 'none';
 	}
 
-	$until = tg_security_two_factor_grace_until();
-
-	return time() < $until ? 'none (email from ' . gmdate( 'Y-m-d', $until ) . ')' : 'email (forced)';
+	return 'email (forced)';
 }

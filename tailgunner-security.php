@@ -3,7 +3,7 @@
  * Plugin Name:       Tailgunner Security
  * Plugin URI:        https://github.com/tailgunnernz/tailgunner-security
  * Description:       Tailgunner's baseline for every site we look after: object cache guards, minor-only core updates, forced two-factor, hardening, security headers, a scanner block and a signed health check for monitor.tailgunner.co.nz.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Tailgunner
