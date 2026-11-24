@@ -1,0 +1,73 @@
+# Builds tailgunner-security.zip and attaches it to a GitHub release.
+#
+# Flow: bump the Version header in tailgunner-security.php and
+# TG_SECURITY_VERSION in early.php, test on tailgunner.co.nz, push to main,
+# then publish a release whose tag matches (v1.2.0 or 1.2.0).
+#
+# Sites only accept that zip (REQUIRE_RELEASE_ASSETS): if this workflow fails,
+# no update is offered. Every release auto-installs on every site, so mark a
+# release as a pre-release to hold it back; the update checker ignores
+# pre-releases until they are switched to a full release.
+
+name: Build release asset
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  # The loader includes early.php as an mu-plugin on every site, so a syntax
+  # error or a missing function on any supported PHP version takes sites
+  # down. Lint and smoke-load on the oldest and newest PHP we run.
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Check PHP syntax
+        run: find . -name '*.php' -not -path './vendor/*' -not -path './dev/*' -print0 | xargs -0 -n1 php -l
+      - name: Smoke-load early.php
+        run: php dev/smoke.php early.php
+      - name: Pure-function tests
+        run: php dev/test-local.php
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tag, Version header and TG_SECURITY_VERSION must agree. If they don't,
+      # WordPress installs the update then offers it again, forever.
+      - name: Check tag matches plugin version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' tailgunner-security.php | sed -E 's/.*Version:[[:space:]]*//')
+          CONST=$(grep -m1 "define( 'TG_SECURITY_VERSION'" early.php | sed -E "s/.*'TG_SECURITY_VERSION', '([^']+)'.*/\1/")
+          echo "tag=$TAG header=$HEADER const=$CONST"
+          if [ "$TAG" != "$HEADER" ] || [ "$TAG" != "$CONST" ]; then
+            echo "::error::Release tag ($GITHUB_REF_NAME) does not match Version header ($HEADER) / TG_SECURITY_VERSION ($CONST). Fix the version, delete the release and tag, and release again."
+            exit 1
+          fi
+
+      - name: Stage and zip plugin
+        run: |
+          mkdir -p stage/tailgunner-security
+          cp -R tailgunner-security.php early.php uninstall.php README.md includes vendor stage/tailgunner-security/
+          cd stage && zip -rq tailgunner-security.zip tailgunner-security
+          unzip -l tailgunner-security.zip | tail -3
+          php ../dev/smoke.php tailgunner-security/early.php
+
+      - name: Attach zip to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" stage/tailgunner-security.zip --clobber
