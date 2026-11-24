@@ -5,8 +5,7 @@
  * When the database drops out (a MariaDB OOM restart, say), a persistent
  * object cache such as Object Cache Pro can record core options as missing
  * in `notoptions` and keep serving that after the database is back. With
- * `template` missing, one of our sites served blank 200 pages for 25 hours in
- * November 2026, then fell back to a default theme.
+ * `template` missing, pages come out blank.
  *
  * When one of these options reads as missing, the guard asks the database
  * directly. If the row is there, it clears the options cache and returns the
@@ -134,9 +133,8 @@ function tg_security_option_guard_unavailable() {
 /**
  * WordPress switches to a default theme when the active one looks broken,
  * which it checks on the Themes screen and in the Customizer. A stale cache
- * makes a healthy theme look broken (one of our sites fell back to Twenty
- * Twenty-Five this way), so the theme options are checked against the
- * database first. If they disagree, or the database can't answer, the check
+ * makes a healthy theme look broken, so the theme options are checked
+ * against the database first. If they disagree, or the database can't answer, the check
  * is skipped and the cache reset.
  */
 function tg_security_validate_theme_guard( $validate ) {

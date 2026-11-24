@@ -4,11 +4,9 @@ The baseline plugin for every WordPress site Tailgunner looks after, on any host
 
 ## What it does
 
-Each feature comes from something that went wrong on one of our sites.
-
 **Reliability**
-- **Option cache guard.** When a persistent object cache records a core option (`template`, `active_plugins`, `siteurl`, `cron`, user roles and others) as missing after a database outage, it checks the database and reloads the options cache. If the database can't answer, visitors get a 503 (not cached) instead of a blank page. WordPress's switch to a default theme on the Themes screen is skipped while the theme options disagree with the database. One of our sites served blank pages for 25 hours in November 2026, then fell back to Twenty Twenty-Five, without it.
-- **ACF cache guard.** Clears an empty cached list of ACF field groups, post types, taxonomies or options pages when the posts exist. One of our sites lost two custom post types, and every URL under them, twice this way.
+- **Option cache guard.** When a persistent object cache records a core option (`template`, `active_plugins`, `siteurl`, `cron`, user roles and others) as missing after a database outage, it checks the database and reloads the options cache. If the database can't answer, visitors get a 503 (not cached) instead of a blank page. WordPress's switch to a default theme on the Themes screen is skipped while the theme options disagree with the database.
+- **ACF cache guard.** Clears an empty cached list of ACF field groups, post types, taxonomies or options pages when the posts exist.
 - **Core updates.** Maintenance and security releases install automatically, major releases never do, whatever wp-config or an mu-plugin says. `DISALLOW_FILE_MODS` is respected.
 
 **Security**

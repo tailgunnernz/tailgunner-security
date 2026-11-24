@@ -5,8 +5,8 @@
  * ACF caches the list of its field groups, post types, taxonomies and options
  * pages in the object cache. If the database drops out while that list is
  * built, the cache holds an empty list, and with a persistent object cache it
- * stays that way: one of our sites lost two custom post types (and every URL
- * under them) twice this way.
+ * stays that way, so ACF post types, taxonomies and field groups stop
+ * registering.
  *
  * Before ACF registers anything on init, the guard looks for an empty cached
  * list and checks the database. If ACF posts of that type exist, it deletes

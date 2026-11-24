@@ -1,5 +1,5 @@
 <?php
-// Recreates the November 2026 blank-site incident in the object cache, plus active_plugins:
+// Marks core options as missing in the object cache, as a database outage can:
 //   wp eval-file poison.php
 // The options are removed from alloptions and marked missing in notoptions,
 // after every shutdown hook so this CLI process can't heal them itself.
