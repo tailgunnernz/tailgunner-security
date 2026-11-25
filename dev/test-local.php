@@ -32,6 +32,7 @@ require dirname( __DIR__ ) . '/includes/common.php';
 require dirname( __DIR__ ) . '/includes/scanner-block.php';
 require dirname( __DIR__ ) . '/includes/update-policy.php';
 require dirname( __DIR__ ) . '/includes/health.php';
+require dirname( __DIR__ ) . '/includes/two-factor.php';
 
 $fails = 0;
 function t( $label, $ok ) {
@@ -111,6 +112,21 @@ t( 'IDN: plain ASCII lookalike refused', ! tg_security_health_host_matches( 'tes
 $GLOBALS['tg_test_home'] = 'https://xn--tst-3qa.nz';
 t( 'IDN: Unicode host matches punycode home', tg_security_health_host_matches( 'tēst.nz' ) );
 $GLOBALS['tg_test_home'] = 'https://www.example.co.nz';
+
+// Two Factor nonce guard: the version gate, and calling Two Factor's
+// protected hash through reflection (CI runs this on the oldest PHP too).
+t( 'nonce guard off without Two Factor', ! tg_security_two_factor_nonce_unguarded() );
+class Two_Factor_Core {
+	protected static function hash_login_nonce( $nonce ) {
+		return 'h:' . json_encode( $nonce );
+	}
+}
+define( 'TWO_FACTOR_VERSION', '0.16.0' );
+t( 'nonce guard on for Two Factor 0.16.0', tg_security_two_factor_nonce_unguarded() );
+t( 'nonce hash via reflection', 'h:{"user_id":1,"expiration":5,"key":"k"}' === tg_security_two_factor_nonce_hash( array( 'user_id' => 1, 'expiration' => 5, 'key' => 'k' ) ) );
+foreach ( array( '0.7.3' => false, '0.8.0' => true, '0.9.1' => true, '0.16.0-beta.1' => true, '0.17.0-beta1' => false, '0.17.0' => false, '0.18.0' => false ) as $v => $want ) {
+	t( "nonce guard range $v", $want === ( version_compare( $v, '0.8.0', '>=' ) && version_compare( $v, '0.17.0-dev', '<' ) ) );
+}
 
 echo $fails ? "\n$fails FAILED\n" : "\nall passed\n";
 exit( $fails ? 1 : 0 );

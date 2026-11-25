@@ -436,6 +436,7 @@ function tg_security_health_report() {
 			'editors'            => $editors,
 			'roles_hash'         => $roles_hash,
 			'two_factor_plugin'  => $two_factor_plugin,
+			'two_factor_version' => defined( 'TWO_FACTOR_VERSION' ) && is_scalar( TWO_FACTOR_VERSION ) ? (string) TWO_FACTOR_VERSION : null,
 			'two_factor_forced'  => $two_factor_forced,
 			'users_can_register' => (bool) get_option( 'users_can_register' ),
 			'default_role'       => $raw_default_role,

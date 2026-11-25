@@ -11,6 +11,7 @@ The baseline plugin for every WordPress site Tailgunner looks after, on any host
 
 **Security**
 - **Forced two-factor** for anyone who can manage the site, edit others' content or run the shop. Users without an authenticator app or passkey get emailed codes. Needs the [Two Factor](https://wordpress.org/plugins/two-factor/) plugin.
+- **Pending 2FA logins stay pending** on Two Factor 0.8.0 to 0.16.0 (0.17.0 has the fix but needs WordPress 7.0; 0.7.x and older aren't covered): a wrong login nonce sent to `wp-login.php?action=validate_2fa` is turned away without deleting the user's pending one, as Two Factor 0.17.0 does (CVE-2026-100508).
 - **Hardening.** XML-RPC off (unless Jetpack is connected), file editor off, no username listing for logged-out visitors (`?author=N`, `/wp-json/wp/v2/users`, users sitemap), no privileged default role for registrations, no WordPress version in the generator tag.
 - **Security headers.** HSTS (1 day, no includeSubDomains or preload), `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options: SAMEORIGIN` on front-end pages. No Content-Security-Policy.
 - **Scanner block.** The rules from our `.htaccess` scanner block, in PHP, so sites on nginx, Lightning or other hosts get them too.
@@ -35,7 +36,7 @@ add_filter( 'tg_security_feature_enabled', function ( $on, $feature ) {
 }, 10, 2 );
 ```
 
-Features: `option_guard`, `acf_guard`, `scanner_block`, `update_policy`, `two_factor`, `xmlrpc`, `file_editor`, `user_enumeration`, `default_role`, `hide_version`, `headers`, `mail_log`, `health`.
+Features: `option_guard`, `acf_guard`, `scanner_block`, `update_policy`, `two_factor`, `two_factor_nonce`, `xmlrpc`, `file_editor`, `user_enumeration`, `default_role`, `hide_version`, `headers`, `mail_log`, `health`.
 
 ## Health check protocol
 

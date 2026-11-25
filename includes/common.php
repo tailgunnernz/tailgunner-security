@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  *     }, 10, 2 );
  *
  * Features: option_guard, acf_guard, scanner_block, update_policy,
- * two_factor, xmlrpc, file_editor, user_enumeration, default_role,
+ * two_factor, two_factor_nonce, xmlrpc, file_editor, user_enumeration, default_role,
  * hide_version, headers, mail_log, health.
  */
 function tg_security_enabled( $feature ) {

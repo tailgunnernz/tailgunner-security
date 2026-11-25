@@ -17,7 +17,7 @@ if ( defined( 'TG_SECURITY_VERSION' ) ) {
 	return;
 }
 
-define( 'TG_SECURITY_VERSION', '1.0.2' );
+define( 'TG_SECURITY_VERSION', '1.0.3' );
 define( 'TG_SECURITY_DIR', __DIR__ . '/' );
 
 require TG_SECURITY_DIR . 'includes/common.php';
@@ -65,6 +65,9 @@ add_filter( 'themes_auto_update_enabled', 'tg_security_frozen_toggles', PHP_INT_
 // Two-factor (needs the Two Factor plugin).
 add_filter( 'two_factor_enabled_providers_for_user', 'tg_security_force_two_factor', 10, 2 );
 add_filter( 'two_factor_primary_provider_for_user', 'tg_security_two_factor_primary', 10, 2 );
+// Only where the running Two Factor needs it: on sites without one, a
+// login_form_validate_2fa hook would change how wp-login.php routes ?action=.
+add_action( 'plugins_loaded', 'tg_security_two_factor_nonce_hook', 0 );
 
 // Hardening.
 add_action( 'plugins_loaded', 'tg_security_hardening_early', PHP_INT_MAX );
